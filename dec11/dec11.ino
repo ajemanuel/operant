@@ -1,7 +1,7 @@
 const int buzzer = 2;     //  
 const int solenoid = 5  ;    //  inferred from rewardValvePin
 const int lick = 10;        // inferred from lickSensorPin
-const int toneControl = 3; // 
+const int toneControl = 3; //
 const int reward = 13;      // inferred from rewardActivePin
 const int punish = 9;    // from
 const int squirt = 4;     // NEED TO INSTALL
@@ -30,7 +30,7 @@ void loop() {
   }
 
   if (digitalRead(squirt) == HIGH) {
-    tone(buzzer, 4000, 100);
+    //tone(buzzer, 4000, 100);
     digitalWrite(solenoid, HIGH);
     delay(solenoidOpenDur);
     digitalWrite(solenoid, LOW);

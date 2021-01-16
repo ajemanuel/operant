@@ -232,7 +232,8 @@ def runTrial(ai_task, di_task, ao_task, do_task, taskParameters):
     ## setting up daq outputs
     ao_out = np.zeros([2,numSamples])
     do_out = np.zeros([6,numSamples],dtype='bool')
-    do_out[0,samplesToToneStart:samplesToToneEnd] = True ## tone
+    if taskParameters['playTone']:
+      do_out[0,samplesToToneStart:samplesToToneEnd] = True ## tone
     do_out[1,1:-1] = True ## trigger (tells the intan system when to record and the non-DO nidaq tasks when to start)
 
     if goTrial:
@@ -348,6 +349,7 @@ def updateParameters(values):
     taskParameters['downSample'] = values['-DownSample-']
     taskParameters['trialDuration'] =  float(values['-TrialDuration-'])
     taskParameters['falseAlarmTimeout'] = float(values['-FalseAlarmTimeout-'])
+    taskParameters['playTone'] = values['-PlayTone-']
     taskParameters['timeToTone'] = float(values['-TimeToTone-'])
     taskParameters['varyTone'] = values['-VaryTone-']
     taskParameters['abortEarlyLick'] = values['-AbortEarlyLick-']
@@ -377,7 +379,8 @@ layout = [  [sg.Text('Number of Trials',size=(textWidth,1)), sg.Input(100,size=(
             [sg.Text('Sample Rate (Hz)',size=(textWidth,1)), sg.Input(default_text=20000,size=(inputWidth,1),key='-SampleRate-'),sg.Check('Downsample?',default=True,key='-DownSample-')],
             [sg.Text('Trial Duration (s)',size=(textWidth,1)), sg.Input(default_text=7,size=(inputWidth,1),key='-TrialDuration-')],
             [sg.Text('False Alarm Timeout (s)',size=(textWidth,1)),sg.Input(default_text=3,size=(inputWidth,1),key='-FalseAlarmTimeout-')],
-            [sg.Text('Time to Tone (from full force; s)',size=(textWidth,1)), sg.Input(default_text=3,size=(inputWidth,1),key='-TimeToTone-'), sg.Check('Vary this?',key='-VaryTone-')],
+            [sg.Check('Play Tone?',default=True,key='-PlayTone-')],
+            [sg.Text('Time to Tone/Reward Window (from full force; s)',size=(textWidth,1)), sg.Input(default_text=3,size=(inputWidth,1),key='-TimeToTone-'), sg.Check('Vary this?',key='-VaryTone-')],
             [sg.Check('Abort if lick detected between start of trial and tone?',key='-AbortEarlyLick-')],
             [sg.Text('Reward Window Duration (s)',size=(textWidth,1)),sg.Input(default_text=1,size=(inputWidth,1),key='-RewardWindowDuration-'),sg.Check('Reward All Go Trials?',key='-RewardAllGos-')],
             [sg.Text('Go Probability',size=(textWidth,1)),sg.Input(default_text=0.5,size=(inputWidth,1),key='-GoProbability-'),sg.Check('Alternate trials?',key='-Alternate-')],
@@ -440,6 +443,10 @@ while True:
             window.Element('-DownSample-').Update(value=tempParameters['downSample'])
             window.Element('-TrialDuration-').Update(value=tempParameters['trialDuration'])
             window.Element('-FalseAlarmTimeout-').Update(value=tempParameters['falseAlarmTimeout'])
+            if 'playTone' in tempParameters.keys():
+                window.Element('-PlayTone-').Update(value=tempParameters['playTone'])
+            else:
+                window.Element('-PlayTone-').Update(value=True)
             window.Element('-TimeToTone-').Update(value=tempParameters['timeToTone'])
             window.Element('-VaryTone-').Update(value=tempParameters['varyTone'])
             if 'abortEarlyLick' in tempParameters.keys():
