@@ -63,7 +63,7 @@ def save_settings(settings_file, settings, values):
         jsondump(settings, f)
 
     sg.popup('Settings saved')
-    
+
 ##################### Make a settings window #####################
 def create_settings_window(settings):
     sg.theme('Default1')
@@ -117,7 +117,7 @@ def setupDaq(settings,taskParameters,setup='task'):
         ao_task.ao_channels.add_ao_voltage_chan(settings['forceChannel_output'],name_to_assign_to_channel='force_out')
         ao_task.timing.cfg_samp_clk_timing(taskParameters['Fs'], source=settings['clock_input'], samps_per_chan=numSamples)
         ao_task.triggers.start_trigger.cfg_dig_edge_start_trig(settings['trigger_input'])
-        
+
         do_task = nidaqmx.Task()
         do_task.do_channels.add_do_chan(settings['tone_output'],name_to_assign_to_lines='tone')
         do_task.do_channels.add_do_chan(settings['trigger_output'],name_to_assign_to_lines='trigger')
@@ -125,19 +125,19 @@ def setupDaq(settings,taskParameters,setup='task'):
         do_task.do_channels.add_do_chan(settings['squirt_output'],name_to_assign_to_lines='squirt')
         do_task.do_channels.add_do_chan(settings['abort_output'],name_to_assign_to_lines='abort')
         do_task.do_channels.add_do_chan(settings['camera_output'],name_to_assign_to_lines='camera')
-        do_task.timing.cfg_samp_clk_timing(taskParameters['Fs'], source=settings['clock_input'], samps_per_chan=numSamples)   
+        do_task.timing.cfg_samp_clk_timing(taskParameters['Fs'], source=settings['clock_input'], samps_per_chan=numSamples)
         return (ai_task, di_task, ao_task, do_task, setup)
-    
+
     elif setup == 'dispenseReward':
         do_task = nidaqmx.Task()
         do_task.do_channels.add_do_chan(settings['squirt_output'],name_to_assign_to_lines='squirt')
         do_task.timing.cfg_samp_clk_timing(taskParameters['Fs'], source=settings['clock_input'], samps_per_chan=100)
         return(do_task, setup)
-        
+
 ##################### Define task functions #####################
 
 def runTask(ai_task, di_task, ao_task, do_task, taskParameters):
-    
+
     di_data = {} ## dictionary that saves digital inputs coming from the daq
     ai_data = {} ## dictionary that saves analog inputs coming from the daq
     do_data = {}
@@ -145,10 +145,10 @@ def runTask(ai_task, di_task, ao_task, do_task, taskParameters):
     results = []
     originalProb = taskParameters['goProbability']
     taskParameters['toneDuration'] = 0.02 ## hard coding this because the actual duration is set by the arduino
-    
+
     for trial in range(taskParameters['numTrials']):
-        print('On trial {} of {}'.format(trial+1,taskParameters['numTrials']))    
-    
+        print('On trial {} of {}'.format(trial+1,taskParameters['numTrials']))
+
 
         ai_data[trial], di_data[trial], ao_data[trial], do_data[trial], result = runTrial(ai_task, di_task, ao_task, do_task, taskParameters)
 
@@ -162,7 +162,7 @@ def runTask(ai_task, di_task, ao_task, do_task, taskParameters):
             pass
         if result == 'FA':
             time.sleep(taskParameters['falseAlarmTimeout'])
-        
+
         last20 = temp[-20:]
         FA_rate_last20 = np.sum(last20=='FA')/(np.sum(last20=='FA')+np.sum(last20=='CR'))
         hitRate_last20 = np.sum(last20=='hit')/(np.sum(last20=='hit')+np.sum(last20=='miss'))
@@ -173,14 +173,14 @@ def runTask(ai_task, di_task, ao_task, do_task, taskParameters):
             print('\t\tforced no-go trial')
         else:
             taskParameters['goProbability'] = originalProb
-        
-        
+
+
     print('\n\nTask Finished, {} rewards delivered\n'.format(np.sum(temp=='hit')))
-    ## saving data and results          
+    ## saving data and results
     if taskParameters['save']:
         print('...saving data...\n')
         outDict = {}
-        
+
         outDict['taskParameters'] = taskParameters
         outDict['di_data'] = {**di_data}
         outDict['di_channels'] = di_task.channel_names
@@ -217,7 +217,7 @@ def runTrial(ai_task, di_task, ao_task, do_task, taskParameters):
     forceDuration_samples = int(taskParameters['forceDuration'] * taskParameters['Fs'])
     samplesToToneStart = int(forceTime_samples + taskParameters['timeToTone'] * taskParameters['Fs'])
     samplesToToneEnd = int(samplesToToneStart + taskParameters['toneDuration'] * taskParameters['Fs'])
-    samplesToRewardEnd = int(samplesToToneStart + taskParameters['rewardWindowDuration'] * taskParameters['Fs'])    
+    samplesToRewardEnd = int(samplesToToneStart + taskParameters['rewardWindowDuration'] * taskParameters['Fs'])
     if taskParameters['varyTone']:
         timeToTone = (timeToToneRange[1]-timeToToneRange[0])*np.random.random_sample()+timeToToneRange[0]
         samplesToToneStart = int(timeToTone * taskParameters['Fs'])
@@ -232,21 +232,22 @@ def runTrial(ai_task, di_task, ao_task, do_task, taskParameters):
     ## setting up daq outputs
     ao_out = np.zeros([2,numSamples])
     do_out = np.zeros([6,numSamples],dtype='bool')
-    do_out[0,samplesToToneStart:samplesToToneEnd] = True ## tone
+    if taskParameters['playTone']:
+      do_out[0,samplesToToneStart:samplesToToneEnd] = True ## tone
     do_out[1,1:-1] = True ## trigger (tells the intan system when to record and the non-DO nidaq tasks when to start)
 
     if goTrial:
         ao_out[1,:forceTime_samples] = np.arange(0,1,1/forceTime_samples) * force_volts
         ao_out[1,forceTime_samples:forceTime_samples+forceDuration_samples] = force_volts
         ao_out[1,forceTime_samples+forceDuration_samples:forceTime_samples+forceDuration_samples+forceTime_samples] = np.arange(1,0,-1/forceTime_samples) * force_volts
-        
+
         do_out[2,samplesToToneStart+50:samplesToRewardEnd] = True ## reward window
         if taskParameters['rewardAllGos']:
             do_out[3,samplesToToneStart+50:samplesToToneStart+150] = True  ## delivers reward via squirt
     if not goTrial:
         ao_out[1,:] = 0
-    
-    
+
+
     if  taskParameters['forceContinuous']: ## overwriting force command so that it changes at the beginning of transition trials
         if goTrial:
             if not lastTrialGo:
@@ -263,17 +264,17 @@ def runTrial(ai_task, di_task, ao_task, do_task, taskParameters):
                 ao_out[1,forceTime_samples:] = 0
             else:
                 ao_out[1,:] = 0
-    
+
     if taskParameters['abortEarlyLick']:
         do_out[4,forceTime_samples:samplesToToneStart] = True
-    
+
     ## making camera trigger
     cameraRate = 30 # Hz
     cameraOnsets = np.int32(np.arange(0.01,taskParameters['trialDuration'],1/cameraRate)*taskParameters['Fs'])
     cameraOffsets = np.int32(cameraOnsets+0.005*taskParameters['Fs'])
     for on_off in zip(cameraOnsets,cameraOffsets):
         do_out[5,on_off[0]:on_off[1]] = True
-    
+
     ## writing daq outputs onto device
     do_task.write(do_out)
     ao_task.write(ao_out)
@@ -290,7 +291,7 @@ def runTrial(ai_task, di_task, ao_task, do_task, taskParameters):
     di_data = np.array(di_task.read(numSamples))
     ao_data = ao_out
     do_data = do_out
-        
+
     ## stopping tasks
     do_task.stop()
     ao_task.stop()
@@ -322,15 +323,15 @@ def runTrial(ai_task, di_task, ao_task, do_task, taskParameters):
                 print('\tCorrect Rejection')
                 result = 'CR'
             lastTrialGo = False
-    
+
     if taskParameters['downSample']:
         ai_data = scipy.signal.decimate(ai_data, 10,0)
         di_data = np.bool8(scipy.signal.decimate(di_data,10,0))
         ao_data = scipy.signal.decimate(ao_data,10,0)
         do_data = np.bool8(scipy.signal.decimate(do_out,10,0))
     return ai_data, di_data, ao_data, do_data, result
-    
-    
+
+
 def dispense(do_task,taskParameters):
     numSamples = 100
     do_out = np.zeros(numSamples,dtype='bool')
@@ -340,7 +341,7 @@ def dispense(do_task,taskParameters):
     do_task.wait_until_done()
     do_task.stop()
 def dprime(hitRate,falseAlarmRate):
-    return(scipy.stats.norm.ppf(hitRate) - scipy.stats.norm.ppf(falseAlarmRate)) 
+    return(scipy.stats.norm.ppf(hitRate) - scipy.stats.norm.ppf(falseAlarmRate))
 def updateParameters(values):
     taskParameters = {}
     taskParameters['numTrials'] = int(values['-NumTrials-'])
@@ -348,6 +349,7 @@ def updateParameters(values):
     taskParameters['downSample'] = values['-DownSample-']
     taskParameters['trialDuration'] =  float(values['-TrialDuration-'])
     taskParameters['falseAlarmTimeout'] = float(values['-FalseAlarmTimeout-'])
+    taskParameters['playTone'] = values['-PlayTone-']
     taskParameters['timeToTone'] = float(values['-TimeToTone-'])
     taskParameters['varyTone'] = values['-VaryTone-']
     taskParameters['abortEarlyLick'] = values['-AbortEarlyLick-']
@@ -377,7 +379,8 @@ layout = [  [sg.Text('Number of Trials',size=(textWidth,1)), sg.Input(100,size=(
             [sg.Text('Sample Rate (Hz)',size=(textWidth,1)), sg.Input(default_text=20000,size=(inputWidth,1),key='-SampleRate-'),sg.Check('Downsample?',default=True,key='-DownSample-')],
             [sg.Text('Trial Duration (s)',size=(textWidth,1)), sg.Input(default_text=7,size=(inputWidth,1),key='-TrialDuration-')],
             [sg.Text('False Alarm Timeout (s)',size=(textWidth,1)),sg.Input(default_text=3,size=(inputWidth,1),key='-FalseAlarmTimeout-')],
-            [sg.Text('Time to Tone (from full force; s)',size=(textWidth,1)), sg.Input(default_text=3,size=(inputWidth,1),key='-TimeToTone-'), sg.Check('Vary this?',key='-VaryTone-')],
+            [sg.Check('Play Tone?',default=True,key='-PlayTone-')],
+            [sg.Text('Time to Tone/Reward Window (from full force; s)',size=(textWidth,1)), sg.Input(default_text=3,size=(inputWidth,1),key='-TimeToTone-'), sg.Check('Vary this?',key='-VaryTone-')],
             [sg.Check('Abort if lick detected between start of trial and tone?',key='-AbortEarlyLick-')],
             [sg.Text('Reward Window Duration (s)',size=(textWidth,1)),sg.Input(default_text=1,size=(inputWidth,1),key='-RewardWindowDuration-'),sg.Check('Reward All Go Trials?',key='-RewardAllGos-')],
             [sg.Text('Go Probability',size=(textWidth,1)),sg.Input(default_text=0.5,size=(inputWidth,1),key='-GoProbability-'),sg.Check('Alternate trials?',key='-Alternate-')],
@@ -405,7 +408,7 @@ while True:
         taskParameters = updateParameters(values)
         print('parameters updated')
 
-     
+
     if event == 'Setup DAQ':
         event,values = create_settings_window(settings).read(close=True)
         if event == 'Save':
@@ -419,7 +422,7 @@ while True:
                 ai_task, di_task, ao_task, do_task, daqStatus = setupDaq(settings,taskParameters)
         except NameError:
             ai_task, di_task, ao_task, do_task, daqStatus = setupDaq(settings,taskParameters)
-        runTask(ai_task, di_task, ao_task, do_task, taskParameters) 
+        runTask(ai_task, di_task, ao_task, do_task, taskParameters)
     if event == 'Dispense Reward':
         try:
             if daqStatus != 'dispenseReward':
@@ -429,7 +432,7 @@ while True:
                 do_task.close()
                 do_task, daqStatus = setupDaq(settings,taskParameters,'dispenseReward')
         except NameError:
-            do_task, daqStatus = setupDaq(settings,taskParameters,'dispenseReward') 
+            do_task, daqStatus = setupDaq(settings,taskParameters,'dispenseReward')
         dispense(do_task,taskParameters)
     if event == 'Load Parameters':
         print(f'Updating parameters from {values["Load Parameters"]}')
@@ -440,6 +443,10 @@ while True:
             window.Element('-DownSample-').Update(value=tempParameters['downSample'])
             window.Element('-TrialDuration-').Update(value=tempParameters['trialDuration'])
             window.Element('-FalseAlarmTimeout-').Update(value=tempParameters['falseAlarmTimeout'])
+            if 'playTone' in tempParameters.keys():
+                window.Element('-PlayTone-').Update(value=tempParameters['playTone'])
+            else:
+                window.Element('-PlayTone-').Update(value=True)
             window.Element('-TimeToTone-').Update(value=tempParameters['timeToTone'])
             window.Element('-VaryTone-').Update(value=tempParameters['varyTone'])
             if 'abortEarlyLick' in tempParameters.keys():
