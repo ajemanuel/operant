@@ -1,11 +1,12 @@
-const int buzzer = 12;     //NEED TO INSTALL BUZZER
-const int solenoid = 13;    //  inferred from rewardValvePin
+const int buzzer = 2;     //  
+const int solenoid = 5  ;    //  inferred from rewardValvePin
 const int lick = 10;        // inferred from lickSensorPin
-const int toneControl = 9; // NEED TO INSTALL TONE CONTROL
+const int toneControl = 3; // 
 const int reward = 13;      // inferred from rewardActivePin
-const int squirt = 5;     // NEED TO DEFINE/INSTALL
-const int abortIn = 4;    // NEED TO DEFINE/INSTALL
-const int solenoidOpenDur = 20;
+const int punish = 9;    // from
+const int squirt = 4;     // NEED TO INSTALL
+const int abortIn = 7;   // NEED TO DEFINE/INSTALL
+const int solenoidOpenDur = 25;
 
 void setup() {
 
