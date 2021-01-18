@@ -6,7 +6,7 @@ const int reward = 13;      // inferred from rewardActivePin
 const int punish = 9;    // from
 const int squirt = 4;     // NEED TO INSTALL
 const int abortIn = 7;   // NEED TO DEFINE/INSTALL
-const int solenoidOpenDur = 25;
+const int solenoidOpenDur = 30;
 
 void setup() {
 
