@@ -205,12 +205,14 @@ def runTrial(ai_task, di_task, ao_task, do_task, taskParameters):
         print('Time to tone range = {} to {} s'.format(timeToToneRange[0],timeToToneRange[1]))
     numSamples = int(taskParameters['Fs'] * taskParameters['trialDuration'])
     if taskParameters['varyForce']:
-        crutchTrial = np.random.binomial(1,0.5) ## max force every five trials
+        taskParameters['crutchForce'] = 75  ## add this to the GUI in the future
+        taskParameters['forceRange'] = [0.5, 50] ## add this to the GUI in the future
+        crutchTrial = np.random.binomial(1,0.25) ## crutch force applies to 25% of Go trials
         if crutchTrial:
-            print('max force trial')
-            force_volts = taskParameters['force']/53.869
+            print('crutch trial')
+            force_volts = taskParameters['crutchForce']/53.869
         else:
-            force_volts = np.random.random_sample()*taskParameters['force']/53.869
+            force_volts = (np.random.random_sample()*(taskParameters['forceRange'][1]-taskParameters['forceRange'][0]) + taskParameters['forceRange'][0])/53.869
     else:
         force_volts = taskParameters['force']/53.869
     forceTime_samples = int(taskParameters['forceTime'] * taskParameters['Fs'])
