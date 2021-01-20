@@ -213,6 +213,7 @@ def runTrial(ai_task, di_task, ao_task, do_task, taskParameters):
             force_volts = taskParameters['crutchForce']/53.869
         else:
             force_volts = (np.random.random_sample()*(taskParameters['forceRange'][1]-taskParameters['forceRange'][0]) + taskParameters['forceRange'][0])/53.869
+            print('{} mN trial'.format(force_volts*53.869))
     else:
         force_volts = taskParameters['force']/53.869
     forceTime_samples = int(taskParameters['forceTime'] * taskParameters['Fs'])
