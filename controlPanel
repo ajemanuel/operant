@@ -145,7 +145,9 @@ def runTask(ai_task, di_task, ao_task, do_task, taskParameters):
     results = []
     originalProb = taskParameters['goProbability']
     taskParameters['toneDuration'] = 0.02 ## hard coding this because the actual duration is set by the arduino
-
+    if taskParameters['save']:
+        fileName = '{}\\{}_{}.gz'.format(taskParameters['savePath'],time.strftime('%Y%m%d_%H%M%S'),
+                                                  taskParameters['animal'])
     for trial in range(taskParameters['numTrials']):
         print('On trial {} of {}'.format(trial+1,taskParameters['numTrials']))
 
@@ -174,13 +176,26 @@ def runTask(ai_task, di_task, ao_task, do_task, taskParameters):
         else:
             taskParameters['goProbability'] = originalProb
 
+        if taskParameters['save']:
+            outDict = {}
+
+            outDict['taskParameters'] = taskParameters
+            outDict['di_data'] = {**di_data}
+            outDict['di_channels'] = di_task.channel_names
+            outDict['ai_data'] = {**ai_data}
+            outDict['ai_channels'] = ai_task.channel_names
+            outDict['do_data'] = {**do_data}
+            outDict['do_channels'] = do_task.channel_names
+            outDict['ao_data'] = {**ao_data}
+            outDict['ao_channels'] = ao_task.channel_names
+            outDict['results'] = np.array(results)
+            pickle.dump(outDict,fileName)
 
     print('\n\nTask Finished, {} rewards delivered\n'.format(np.sum(temp=='hit')))
     ## saving data and results
     if taskParameters['save']:
         print('...saving data...\n')
         outDict = {}
-
         outDict['taskParameters'] = taskParameters
         outDict['di_data'] = {**di_data}
         outDict['di_channels'] = di_task.channel_names
@@ -191,8 +206,6 @@ def runTask(ai_task, di_task, ao_task, do_task, taskParameters):
         outDict['ao_data'] = {**ao_data}
         outDict['ao_channels'] = ao_task.channel_names
         outDict['results'] = np.array(results)
-        fileName = '{}\\{}_{}.gz'.format(taskParameters['savePath'],time.strftime('%Y%m%d_%H%M%S'),
-                                                  taskParameters['animal'])
         pickle.dump(outDict,fileName)
         print('Data saved in {}\n'.format(fileName))
 
