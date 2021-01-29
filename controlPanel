@@ -176,7 +176,7 @@ def runTask(ai_task, di_task, ao_task, do_task, taskParameters):
         else:
             taskParameters['goProbability'] = originalProb
 
-        if taskParameters['save']:
+        if taskParameters['save'] and trial % 50 == 0: ## save every fifty trials
             outDict = {}
 
             outDict['taskParameters'] = taskParameters
@@ -193,6 +193,7 @@ def runTask(ai_task, di_task, ao_task, do_task, taskParameters):
 
     print('\n\nTask Finished, {} rewards delivered\n'.format(np.sum(temp=='hit')))
     ## saving data and results
+    taskParameters['goProbability'] = originalProb ## resetting here so the appropriate probability is saved
     if taskParameters['save']:
         print('...saving data...\n')
         outDict = {}
