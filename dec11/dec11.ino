@@ -5,7 +5,7 @@ const int toneControl = 9; // toneControl input on pin 9
 const int reward = 2;      //reward input on pin 2
 const int squirt = 5;     //force reward with pin 0
 const int abortIn = 4;    // abort input on pin 4
-const int solenoidOpenDur = 28;
+const int solenoidOpenDur = 40;
 
 void setup() {
 
