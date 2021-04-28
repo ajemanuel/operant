@@ -144,24 +144,24 @@ def setupDaq(settings,taskParameters,setup='task'):
         return(do_task, setup)
 
 ##################### Define task functions #####################
-global lastLickTime = time.time()
-def monitorLicks(settings,taskParameters):
-    global lastLickTime
-    lastLickTime = time.time()
-    di_task, daqStatus = setupDaq(settings,taskParameters,setup='lickMonitor')
-    di_task.start()
-    while time.time() - lastLickTime < taskParameters['lickTimeout']:  ## need to setup task parameters to include this
-        di_task.register_signal_event(nidaqmx.constants.Signal.CHANGE_DETECTION_EVENT,callbackUpdateLickTime)
-        print(lastLickTime)
-    di_task.stop()
-    di_task.close()
-    return
-
-def callbackUpdateLickTime(task_handle,signal_type=nidaqmx.contansts.Signal.CHANGE_DETECTION_EVENT,callback_data):
-    print('Callback function ran')
-    global lastLickTime
-    lastLickTime = datetime.now()
-    return 0
+# global lastLickTime = time.time()
+# def monitorLicks(settings,taskParameters):
+#     global lastLickTime
+#     lastLickTime = time.time()
+#     di_task, daqStatus = setupDaq(settings,taskParameters,setup='lickMonitor')
+#     di_task.start()
+#     while time.time() - lastLickTime < taskParameters['lickTimeout']:  ## need to setup task parameters to include this
+#         di_task.register_signal_event(nidaqmx.constants.Signal.CHANGE_DETECTION_EVENT,callbackUpdateLickTime)
+#         print(lastLickTime)
+#     di_task.stop()
+#     di_task.close()
+#     return
+#
+# def callbackUpdateLickTime(task_handle,signal_type=nidaqmx.contansts.Signal.CHANGE_DETECTION_EVENT,callback_data):
+#     print('Callback function ran')
+#     global lastLickTime
+#     lastLickTime = datetime.now()
+#     return 0
 
 
 
@@ -438,7 +438,7 @@ def the_gui():
                 [sg.Text('Force (mN)',size=(textWidth,1)),sg.Input(default_text=50,size=(inputWidth,1),key='-Force-'),sg.Check('Vary force?',key='-VaryForce-')],
                 [sg.Text('Force Ramp Time (s)',size=(textWidth,1)),sg.Input(default_text=1,size=(inputWidth,1),key='-ForceRampTime-')],
                 [sg.Text('Step Duration (s)',size=(textWidth,1)),sg.Input(default_text=3,size=(inputWidth,1),key='-StepDuration-'),sg.Check('Continue to Nogo?',key='-EnableContinuous-')],
-                [sg.Text('Save Path',size=(textWidth,1)),sg.Input(os.path.normpath('C://Data/Behavior/'),size=(20,1),key='-SavePath-'),
+                [sg.Text('Save Path',size=(textWidth,1)),sg.Input(os.path.normpath('E://DATA/Behavior/'),size=(20,1),key='-SavePath-'),
                  sg.Check('Save?',default=True,key='-Save-')],
                 [sg.Text('Animal ID',size=(textWidth,1)),sg.Input(size=(20,1),key='-Animal-')],
                 [sg.Button('Run Task',size=(30,2)),sg.Button('Dispense Reward',size=(30,2))],
