@@ -237,8 +237,7 @@ def runTask(ai_task, di_task, ao_task, do_task, taskParameters):
         outDict['ao_data'] = {**ao_data}
         outDict['ao_channels'] = ao_task.channel_names
         outDict['results'] = np.array(results)
-        fileName = '{}\\{}_{}.gz'.format(taskParameters['savePath'],time.strftime('%Y%m%d_%H%M%S'),
-                                                  taskParameters['animal'])
+
         pickle.dump(outDict,fileName)
         print('Data saved in {}\n'.format(fileName))
 
