@@ -128,6 +128,13 @@ def setupDaq(settings,taskParameters,setup='task'):
         do_task.timing.cfg_samp_clk_timing(taskParameters['Fs'], source=settings['clock_input'], samps_per_chan=numSamples)
         return (ai_task, di_task, ao_task, do_task, setup)
 
+    elif setup == 'lickMonitor':
+        di_task = nidaqmx.Task()
+        di_task.di_channels.add_di_chan(settings['lick input'],name_to_assign_to_lines='lick')
+        di_task.timing.cfg_change_detection_timing(falling_edge_chan=settings['lick input'],
+            sample_mode = AcquisitionType.CONTINUOUS, samps_per_chan = 2)
+        return(di_task, setup)
+
     elif setup == 'dispenseReward':
         do_task = nidaqmx.Task()
         do_task.do_channels.add_do_chan(settings['squirt_output'],name_to_assign_to_lines='squirt')
@@ -135,6 +142,24 @@ def setupDaq(settings,taskParameters,setup='task'):
         return(do_task, setup)
 
 ##################### Define task functions #####################
+global lastLickTime = time.time()
+def monitorLicks(di_task,settings,taskParameters):
+    global lastLickTime
+    lastLickTime = time.time()
+    di_task, daqStatus = setupDaq(settings,taskParameters,setup='lickMonitor')
+    di_task.start()
+    while time.time() - lastLickTime < taskParameters['lickTimeout']:  ## need to setup task parameters to include this
+        di_task.register_signal_event(nidaqmx.constants.Signal.CHANGE_DETECTION_EVENT,callbackUpdateLickTime)
+        print(lastLickTime)
+    di_task.stop()
+    di_task.close()
+    return
+
+def callbackUpdateLickTime(task_handle,signal_type=nidaqmx.contansts.Signal.CHANGE_DETECTION_EVENT,callback_data):
+    print('Callback function ran')
+    global lastLickTime
+    lastLickTime = datetime.now()
+    return 0
 
 def runTask(ai_task, di_task, ao_task, do_task, taskParameters):
 
