@@ -21,6 +21,7 @@ DEFAULT_SETTINGS = {'lengthChannel_input': 'Dev2/ai0',
                     'squirt_output': '/Dev2/port0/line3',
                     'abort_output': '/Dev2/port0/line2',
                     'camera_output': '/Dev2/port0/line6',
+                    'punish_output': '/Dev2/port0/line1',
                     'lick_input': '/Dev2/port0/line7',
                     'clock_input': '/Dev2/PFI0',
                     'trigger_input': '/Dev2/PFI1'
@@ -36,6 +37,7 @@ SETTINGS_KEYS_TO_ELEMENT_KEYS = {'lengthChannel_input': '-LENGTH IN-',
                                  'squirt_output': '-SQUIRT OUT-',
                                  'abort_output': '-ABORT OUT-',
                                  'camera_output': '-CAMERA OUT-',
+                                 'punish_output': '-PUNISH OUT-',
                                  'lick_input': '-LICK IN-',
                                  'clock_input': '-CLOCK IN-',
                                  'trigger_input': '-TRIGGER IN-'
@@ -83,6 +85,7 @@ def create_settings_window(settings):
                 [TextLabel('Squirt Output'),sg.Input(key='-SQUIRT OUT-')],
                 [TextLabel('Abort Output'),sg.Input(key='-ABORT OUT-')],
                 [TextLabel('Camera Output'),sg.Input(key='-CAMERA OUT-')],
+                [TextLabel('Punish Output'),sg.Input(key='-PUNISH OUT-')],
                 [TextLabel('Lick Input'),sg.Input(key='-LICK IN-')],
                 [TextLabel('Clock Input'),sg.Input(key='-CLOCK IN-')],
                 [TextLabel('Trigger Input'),sg.Input(key='-TRIGGER IN-')],
@@ -127,6 +130,7 @@ def setupDaq(settings,taskParameters,setup='task'):
         do_task.do_channels.add_do_chan(settings['squirt_output'],name_to_assign_to_lines='squirt')
         do_task.do_channels.add_do_chan(settings['abort_output'],name_to_assign_to_lines='abort')
         do_task.do_channels.add_do_chan(settings['camera_output'],name_to_assign_to_lines='camera')
+        do_task.do_channels.add_do_chan(settings['punish_output'],name_to_assign_to_lines='punish')
         do_task.timing.cfg_samp_clk_timing(taskParameters['Fs'], source=settings['clock_input'], samps_per_chan=numSamples)
         return (ai_task, di_task, ao_task, do_task, setup)
 
@@ -279,7 +283,7 @@ def runTrial(ai_task, di_task, ao_task, do_task, taskParameters):
         goTrial = not lastTrialGo
     ## setting up daq outputs
     ao_out = np.zeros([2,numSamples])
-    do_out = np.zeros([6,numSamples],dtype='bool')
+    do_out = np.zeros([7,numSamples],dtype='bool')
     if taskParameters['playTone']:
       do_out[0,samplesToToneStart:samplesToToneEnd] = True ## tone
     do_out[1,1:-1] = True ## trigger (tells the intan system when to record and the non-DO nidaq tasks when to start)
@@ -294,7 +298,9 @@ def runTrial(ai_task, di_task, ao_task, do_task, taskParameters):
             do_out[3,samplesToToneStart+50:samplesToToneStart+150] = True  ## delivers reward via squirt
     if not goTrial:
         ao_out[1,:] = 0
-
+        if taskParameters['enablePunish']:
+            do_out[6,samplesToToneStart+50:samplesToRewardEnd] = True ## punish window
+            print('punishing FAs w/ NaCl')
 
     if  taskParameters['forceContinuous']: ## overwriting force command so that it changes at the beginning of transition trials
         if goTrial:
@@ -398,6 +404,7 @@ def updateParameters(values):
     taskParameters['trialDuration'] =  float(values['-TrialDuration-'])
     taskParameters['falseAlarmTimeout'] = float(values['-FalseAlarmTimeout-'])
     taskParameters['playTone'] = values['-PlayTone-']
+    taskParameters['enablePunish'] = values['-EnablePunish-']
     taskParameters['timeToTone'] = float(values['-TimeToTone-'])
     taskParameters['varyTone'] = values['-VaryTone-']
     taskParameters['abortEarlyLick'] = values['-AbortEarlyLick-']
@@ -429,7 +436,7 @@ def the_gui():
                 [sg.Text('Sample Rate (Hz)',size=(textWidth,1)), sg.Input(default_text=20000,size=(inputWidth,1),key='-SampleRate-'),sg.Check('Downsample?',default=True,key='-DownSample-')],
                 [sg.Text('Trial Duration (s)',size=(textWidth,1)), sg.Input(default_text=7,size=(inputWidth,1),key='-TrialDuration-')],
                 [sg.Text('False Alarm Timeout (s)',size=(textWidth,1)),sg.Input(default_text=3,size=(inputWidth,1),key='-FalseAlarmTimeout-')],
-                [sg.Check('Play Tone?',default=True,key='-PlayTone-')],
+                [sg.Check('Play Tone?',default=True,key='-PlayTone-'),sg.Check('Enable punish?',default=False,key='-EnablePunish-')],
                 [sg.Text('Time to Tone/Reward Window (from full force; s)',size=(textWidth,1)), sg.Input(default_text=3,size=(inputWidth,1),key='-TimeToTone-'), sg.Check('Vary this?',key='-VaryTone-')],
                 [sg.Check('Abort if lick detected between start of trial and tone?',key='-AbortEarlyLick-')],
                 [sg.Text('Reward Window Duration (s)',size=(textWidth,1)),sg.Input(default_text=1,size=(inputWidth,1),key='-RewardWindowDuration-'),sg.Check('Reward All Go Trials?',key='-RewardAllGos-')],
