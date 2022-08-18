@@ -6,7 +6,7 @@ const int reward = 2;      //reward input on pin 2
 const int squirt = 5;     //force reward with pin 0
 const int abortIn = 4;    // abort input on pin 4
 const int solPunish = 8;    //punish solenoid to arduino pin 13
-const int solenoidOpenDur = 35;
+const int solenoidOpenDur = 25;
 const int punish = 6;   // punish window input on pin 10
 
 void setup() {

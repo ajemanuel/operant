@@ -148,12 +148,17 @@ def setupDaq(settings,taskParameters,setup='task'):
         return(do_task, setup)
 
 ##################### Define task functions #####################
-# global lastLickTime = time.time()
+# global lastLickTime
+# lastLickTime = time.time()
 # def monitorLicks(settings,taskParameters):
 #     global lastLickTime
 #     lastLickTime = time.time()
 #     di_task, daqStatus = setupDaq(settings,taskParameters,setup='lickMonitor')
 #     di_task.start()
+#
+#     if 'lickTimeout' not in taskParameters:
+#         taskParameters['lickTimeout'] = 3 # default to 3 s lick timeout
+#
 #     while time.time() - lastLickTime < taskParameters['lickTimeout']:  ## need to setup task parameters to include this
 #         di_task.register_signal_event(nidaqmx.constants.Signal.CHANGE_DETECTION_EVENT,callbackUpdateLickTime)
 #         print(lastLickTime)
@@ -524,6 +529,8 @@ def the_gui():
                 window.Element('-EnableContinuous-').Update(value=tempParameters['forceContinuous'])
             except:
                 'invalid file'
+        if event == 'Test Lick Monitor':
+            print('testing licks')
     window.close()
 
 if __name__ == '__main__':
